@@ -1,3 +1,12 @@
+/**
+ * @filename    : ParameterTile.qml
+ * @brief   : Presents a measured value and its editable target setting.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -22,7 +31,7 @@ AbstractButton {
     Layout.minimumWidth: 140
     Layout.minimumHeight: 100
 
-    // Margins / Spacing around the content
+    // Maintain a stable touch target while allowing the panel to compact horizontally.
     leftPadding: 12
     rightPadding: 12
     topPadding: 8
@@ -34,6 +43,7 @@ AbstractButton {
                      + Number(targetValue).toFixed(valueDecimals) + " " + unit
     Accessible.role: Accessible.Button
 
+    // Publishes the setpoint and safety limits selected for editing.
     onClicked: parameterSelected(parameterName, targetValue, unit,
                                  minLimit, maxLimit, softLimit)
 
@@ -50,6 +60,7 @@ AbstractButton {
     contentItem: ColumnLayout {
         spacing: 2
 
+        // Separate live measured data from the editable prescribed setpoint.
         RowLayout {
             Layout.fillWidth: true
 

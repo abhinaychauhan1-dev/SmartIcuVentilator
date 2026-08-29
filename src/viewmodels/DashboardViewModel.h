@@ -1,3 +1,12 @@
+/**
+ * @filename    : DashboardViewModel.h
+ * @brief   : Declares dashboard state, metrics, alarms, and UI commands.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #pragma once
 
 #include <QObject>
@@ -11,6 +20,7 @@ namespace ventilator {
 class SimulationEngine;
 class WaveformPlotViewModel;
 
+// QML-facing coordinator for measured data, controls, and alarm presentation.
 class DashboardViewModel final : public QObject {
     Q_OBJECT
     Q_PROPERTY(double peakPressure READ peakPressure NOTIFY metricsChanged)
@@ -76,6 +86,7 @@ private:
     QTimer silenceTimer_;
     QTimer alarmAudioTimer_;
 
+    // Last completed-breath metrics exposed as stable dashboard values.
     double peakPressure_{0.0};
     double meanPressure_{0.0};
     double measuredPeep_{0.0};
@@ -86,6 +97,7 @@ private:
     double lungExpansionScale_{1.0};
     double complianceIndex_{0.0};
 
+    // Alarm presentation state is updated independently from breath metrics.
     int highestAlarmPriority_{0};
     QString activeAlarmText_;
     int silenceSecondsRemaining_{0};

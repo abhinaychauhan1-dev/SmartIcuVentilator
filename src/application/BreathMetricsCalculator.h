@@ -1,3 +1,12 @@
+/**
+ * @filename    : BreathMetricsCalculator.h
+ * @brief   : Declares breath-cycle analysis and respiratory metric calculations.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -6,6 +15,7 @@
 
 namespace ventilator {
 
+// Aggregated measurements published only after a complete breath cycle.
 struct BreathMetrics {
     double peakPressure;
     double meanPressure;
@@ -16,12 +26,14 @@ struct BreathMetrics {
     double complianceIndex;
 };
 
+// Per-sample output plus an optional breath-boundary result.
 struct BreathAnalysis {
     double lungExpansionScale;
     double currentPeakPressure;
     std::optional<BreathMetrics> completedBreath;
 };
 
+// Accumulates telemetry between consecutive inspiration transitions.
 class BreathMetricsCalculator final {
 public:
     [[nodiscard]] BreathAnalysis process(

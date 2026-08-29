@@ -1,3 +1,12 @@
+/**
+ * @filename    : AlarmBanner.qml
+ * @brief   : Displays active alarms, priority status, and silence controls.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -19,11 +28,13 @@ Rectangle {
     implicitHeight: 76
     color: "#20282D"
 
+    // Animate the countdown ring without changing the backend silence duration.
     Behavior on silenceProgress {
         NumberAnimation { duration: 350; easing.type: Easing.OutCubic }
     }
 
     SequentialAnimation {
+        // IEC-style visual urgency: only the highest priority flashes.
         running: root.priority === 3
         loops: Animation.Infinite
         NumberAnimation { target: root; property: "highFlashOpacity"; from: 1.0; to: 0.35; duration: 250; easing.type: Easing.InOutQuad }
@@ -94,6 +105,7 @@ Rectangle {
             hoverEnabled: true
             focusPolicy: Qt.StrongFocus
             Accessible.name: text
+            // Requests a fixed two-minute audio silence from the backend.
             onClicked: root.dashboardViewModel.silenceAudioAlarm(120)
 
             background: Rectangle {
@@ -115,8 +127,10 @@ Rectangle {
                     Canvas {
                         id: silenceProgressCanvas
 
+                        // Draw remaining silence as a clockwise fraction of 120 seconds.
                         anchors.fill: parent
                         antialiasing: true
+                        // Repaints the circular silence countdown indicator.
                         onPaint: {
                             const context = getContext("2d")
                             const center = width / 2
@@ -141,6 +155,7 @@ Rectangle {
 
                         Connections {
                             target: root
+                            // Schedules a repaint whenever the animated progress changes.
                             function onSilenceProgressChanged() {
                                 silenceProgressCanvas.requestPaint()
                             }

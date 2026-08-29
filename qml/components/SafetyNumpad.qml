@@ -1,3 +1,12 @@
+/**
+ * @filename    : SafetyNumpad.qml
+ * @brief   : Collects and validates numeric ventilation parameter input.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -15,6 +24,7 @@ Popup {
     property real softLimit: maxLimit
     property int valueDecimals: 1
 
+    // Hard limits block confirmation; soft limits require an explicit override.
     readonly property real enteredValue: Number(editText)
     readonly property bool numericEntryValid: editText.length > 0
                                               && Number.isFinite(enteredValue)
@@ -39,11 +49,13 @@ Popup {
     height: Math.min(620, parent ? parent.height - 32 : 620)
     anchors.centerIn: parent
 
+    // Initializes a new edit session from the current prescribed value.
     function resetSession() {
         editText = Number(currentValue).toFixed(valueDecimals)
         softLimitOverridden = false
     }
 
+    // Appends one valid keypad character and clears any previous override.
     function appendCharacter(character) {
         if (character === "." && editText.indexOf(".") !== -1)
             return
@@ -54,11 +66,13 @@ Popup {
         softLimitOverridden = false
     }
 
+    // Closes the popup without publishing the pending value.
     function cancelEdit() {
         close()
         editCancelled()
     }
 
+    // Resets stale input every time the popup is presented.
     onOpened: resetSession()
 
     background: Rectangle {
@@ -138,6 +152,7 @@ Popup {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: visible ? 72 : 0
+            // Clinical soft limits warn without preventing an intentional setting.
             visible: root.exceedsSoftLimit
             color: "#3A2908"
             border.color: "#FFB300"
@@ -193,6 +208,7 @@ Popup {
                     font.weight: Font.DemiBold
                     Accessible.name: modelData === "⌫" ? "Backspace"
                                      : modelData === "C" ? "Clear" : modelData
+                    // Dispatches editing keys while invalidating stale overrides.
                     onClicked: {
                         if (modelData === "⌫") {
                             root.editText = root.editText.slice(0, -1)
@@ -239,6 +255,7 @@ Popup {
                 enabled: root.canConfirm
                 Layout.fillWidth: true
                 Layout.minimumHeight: 56
+                // Publishes only a hard-limit-safe or explicitly overridden value.
                 onClicked: {
                     root.valueConfirmed(root.parameterName, root.enteredValue)
                     root.close()

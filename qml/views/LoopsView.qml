@@ -1,3 +1,12 @@
+/**
+ * @filename    : LoopsView.qml
+ * @brief   : Visualizes pressure-volume and flow-volume respiratory loops.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -14,6 +23,7 @@ Rectangle {
     implicitHeight: 700
     readonly property bool compactWidth: width < 1100
 
+    // Estimates dynamic compliance from tidal volume and driving pressure.
     function dynamicCompliance() {
         if (!dashboardViewModel)
             return NaN
@@ -23,17 +33,20 @@ Rectangle {
                 ? dashboardViewModel.tidalVolume * 1000.0 / drivingPressure : NaN
     }
 
+    // Maps normalized stiffness to a display-only airway resistance estimate.
     function estimatedResistance() {
         if (!dashboardViewModel)
             return NaN
         return 5.0 + dashboardViewModel.complianceIndex * 20.0
     }
 
+    // Formats a finite metric or returns a placeholder for unavailable data.
     function metric(value, decimals) {
         return Number.isFinite(value) ? Number(value).toFixed(decimals) : "--"
     }
 
     Timer {
+        // Refresh only the active traces; frozen references remain unchanged.
         interval: 50
         repeat: true
         running: root.visible && root.waveformPlotViewModel !== null

@@ -1,3 +1,12 @@
+/**
+ * @filename    : VentilationParameterRouter.cpp
+ * @brief   : Validates and applies named ventilation parameter updates.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #include "VentilationParameterRouter.h"
 
 #include "../domain/SimulationEngine.h"
@@ -6,6 +15,7 @@
 
 namespace ventilator {
 
+// Validates and routes a named numeric parameter to the matching engine setter.
 bool VentilationParameterRouter::apply(
     SimulationEngine& engine, const QString& parameterName, double value)
 {
@@ -13,6 +23,7 @@ bool VentilationParameterRouter::apply(
         return false;
     }
 
+    // Accept display labels and API-style names through one canonical key.
     const QString name = normalizedName(parameterName);
     if (name == QStringLiteral("peep")) {
         engine.setPeep(value);
@@ -30,6 +41,7 @@ bool VentilationParameterRouter::apply(
     } else if (name == QStringLiteral("resistance")) {
         engine.setResistance(value);
     } else if (name == QStringLiteral("mode")) {
+        // The numeric boundary provides a stable QML-friendly mode contract.
         const auto mode = value < 0.5
             ? SimulationEngine::VentilationMode::VolumeControl
             : SimulationEngine::VentilationMode::PressureControl;
@@ -41,6 +53,7 @@ bool VentilationParameterRouter::apply(
     return true;
 }
 
+// Removes display formatting so equivalent parameter labels share one routing key.
 QString VentilationParameterRouter::normalizedName(const QString& parameterName)
 {
     QString name = parameterName.trimmed().toLower();

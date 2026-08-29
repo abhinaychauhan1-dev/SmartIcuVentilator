@@ -1,3 +1,12 @@
+/**
+ * @filename    : ParameterControlPanel.qml
+ * @brief   : Provides controls for configuring ventilation treatment parameters.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -21,6 +30,7 @@ Rectangle {
     border.color: "#29373E"
     border.width: 1
 
+    // Configures and opens the shared safety editor for a selected parameter.
     function openEditor(name, currentValue, unit, minLimit, maxLimit, softLimit) {
         safetyNumpad.parameterName = name
         safetyNumpad.currentValue = currentValue
@@ -33,12 +43,14 @@ Rectangle {
         safetyNumpad.open()
     }
 
+    // Converts the operator's 1:x I:E ratio into inspiratory seconds per cycle.
     function updateInspiratoryTime() {
         const cycleDuration = 60.0 / Math.max(rateSetpoint, 1.0)
         const inspiratoryTime = cycleDuration / (1.0 + Math.max(ieRatioSetpoint, 0.1))
         dashboardViewModel.setVentilationParameter("inspiratoryTime", inspiratoryTime)
     }
 
+    // Stores a confirmed display value and forwards its engine-scale equivalent.
     function applySetpoint(name, value) {
         switch (name) {
         case "PEEP":
@@ -66,7 +78,9 @@ Rectangle {
     }
 
     component VentilatorParameterTile: ParameterTile {
+        // Centralize editor wiring so every setpoint uses identical safety limits.
         Layout.fillWidth: true
+        // Opens the editor with the limits declared by the selected tile.
         onParameterSelected: function(name, currentValue, selectedUnit,
                                       minimum, maximum, softMaximum) {
             root.openEditor(name, currentValue, selectedUnit,
@@ -151,6 +165,7 @@ Rectangle {
         id: safetyNumpad
 
         parent: Overlay.overlay
+        // Applies a value only after the safety editor has confirmed it.
         onValueConfirmed: function(name, value) {
             root.applySetpoint(name, value)
         }

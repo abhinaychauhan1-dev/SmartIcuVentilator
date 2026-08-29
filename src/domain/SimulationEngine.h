@@ -1,3 +1,12 @@
+/**
+ * @filename    : SimulationEngine.h
+ * @brief   : Declares real-time ventilator simulation and telemetry generation.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #pragma once
 
 #include <array>
@@ -9,6 +18,7 @@
 
 namespace ventilator {
 
+// One immutable sample transferred from the worker thread to the UI thread.
 struct TelemetryFrame {
     double timestamp;
     double paw;
@@ -18,6 +28,7 @@ struct TelemetryFrame {
     bool isInspiration;
 };
 
+// Owns the real-time simulation worker and its thread-safe parameters.
 class SimulationEngine final {
 public:
     enum class VentilationMode : std::uint8_t {
@@ -48,6 +59,7 @@ public:
     void setResistance(double resistance) noexcept;
 
 private:
+    // Lock-free single-producer/single-consumer queue for telemetry handoff.
     template<typename T, std::size_t Capacity>
     class SpscRingBuffer final {
         static_assert(Capacity > 1);
@@ -55,6 +67,7 @@ private:
         static_assert(std::atomic<std::size_t>::is_always_lock_free);
 
     public:
+        // Publishes one item when queue capacity is available.
         [[nodiscard]] bool tryPush(const T& item) noexcept
         {
             const auto head = head_.load(std::memory_order_relaxed);
@@ -67,6 +80,7 @@ private:
             return true;
         }
 
+        // Retrieves the oldest published item when the queue is not empty.
         [[nodiscard]] bool tryPop(T& item) noexcept
         {
             const auto tail = tail_.load(std::memory_order_relaxed);

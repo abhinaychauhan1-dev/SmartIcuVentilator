@@ -1,3 +1,9 @@
+# @filename  : CMakeLists.txt
+# @brief     : Configures the Smart ICU Ventilator executable and QML module.
+# @author    : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+# @version   : 1.0.0
+# Copyright (c) 2024. All rights reserved.
+
 cmake_minimum_required(VERSION 3.21)
 
 project(SmartIcuVentilator
@@ -5,10 +11,12 @@ project(SmartIcuVentilator
     LANGUAGES CXX
 )
 
+# Use a strict, portable C++20 language configuration.
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Resolve the Qt modules used by the native backend and QML interface.
 find_package(Qt6 6.8 REQUIRED COMPONENTS
     Core
     Quick
@@ -19,6 +27,7 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS
 
 qt_standard_project_setup(REQUIRES 6.8)
 
+# Build the native application and register all production C++ sources.
 qt_add_executable(SmartIcuVentilator
     main.cpp
     src/application/AlarmEvaluator.cpp
@@ -37,6 +46,7 @@ qt_add_executable(SmartIcuVentilator
     src/viewmodels/WaveformPlotViewModel.h
 )
 
+# Package the authored QML files as the VentilatorHMI importable module.
 qt_add_qml_module(SmartIcuVentilator
     URI VentilatorHMI
     VERSION 1.0
@@ -51,6 +61,7 @@ qt_add_qml_module(SmartIcuVentilator
         qml/components/AlarmBanner.qml
 )
 
+# Link runtime modules explicitly to keep target dependencies visible.
 target_link_libraries(SmartIcuVentilator
     PRIVATE
         Qt6::Core
@@ -60,10 +71,12 @@ target_link_libraries(SmartIcuVentilator
         Qt6::Widgets
 )
 
+# Windows multimedia supplies asynchronous in-memory alarm playback.
 if(WIN32)
     target_link_libraries(SmartIcuVentilator PRIVATE winmm)
 endif()
 
+# Enable equivalent high-warning levels across supported compilers.
 if(MSVC)
     target_compile_options(SmartIcuVentilator PRIVATE /W4)
 else()

@@ -1,3 +1,12 @@
+/**
+ * @filename    : DashboardViewModel.cpp
+ * @brief   : Coordinates telemetry, breath metrics, alarms, and dashboard actions.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #include "DashboardViewModel.h"
 
 #include "WaveformPlotViewModel.h"
@@ -22,6 +31,7 @@
 namespace ventilator {
 namespace {
 
+// Maps clinical alarm priority to its repeating audio cadence.
 [[nodiscard]] int alarmInterval(int priority) noexcept
 {
     switch (priority) {
@@ -34,6 +44,7 @@ namespace {
     }
 }
 
+// Synthesizes a short, edge-faded PCM alarm tone as an in-memory WAV file.
 [[nodiscard]] QByteArray createAlarmTone(double frequency, int durationMs)
 {
     constexpr quint32 sampleRate = 44100;
@@ -47,6 +58,7 @@ namespace {
 
     QByteArray waveData;
     waveData.reserve(static_cast<qsizetype>(44 + dataSize));
+    // Build a complete PCM WAV in memory for non-blocking WinMM playback.
     QDataStream stream(&waveData, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream.writeRawData("RIFF", 4);
@@ -69,6 +81,7 @@ namespace {
     return waveData;
 }
 
+// Plays the tone assigned to the active alarm priority.
 void playAlarmTone(int priority)
 {
 #ifdef Q_OS_WIN
@@ -85,6 +98,7 @@ void playAlarmTone(int priority)
 #endif
 }
 
+// Plays a short marker at the start of an unalarmed breath.
 void playBreathTone()
 {
 #ifdef Q_OS_WIN
@@ -98,6 +112,7 @@ void playBreathTone()
 
 } // namespace
 
+// Initializes alarm cadence and silence countdown timers.
 DashboardViewModel::DashboardViewModel(SimulationEngine* engine, QObject* parent)
     : QObject(parent)
     , engine_(engine)
@@ -105,6 +120,7 @@ DashboardViewModel::DashboardViewModel(SimulationEngine* engine, QObject* parent
     , alarmAudioTimer_(this)
 {
     silenceTimer_.setInterval(1000);
+    // Count down silence independently; expiry immediately restores alarm audio.
     connect(&silenceTimer_, &QTimer::timeout, this, [this] {
         if (silenceSecondsRemaining_ > 0) {
             --silenceSecondsRemaining_;
@@ -123,6 +139,7 @@ DashboardViewModel::DashboardViewModel(SimulationEngine* engine, QObject* parent
     });
 }
 
+// Initializes the dashboard and subscribes it to a telemetry source.
 DashboardViewModel::DashboardViewModel(
     SimulationEngine* engine,
     WaveformPlotViewModel* telemetrySource,
@@ -132,66 +149,79 @@ DashboardViewModel::DashboardViewModel(
     setTelemetrySource(telemetrySource);
 }
 
+// Returns the latest completed-breath peak airway pressure.
 double DashboardViewModel::peakPressure() const noexcept
 {
     return peakPressure_;
 }
 
+// Returns the latest completed-breath mean airway pressure.
 double DashboardViewModel::meanPressure() const noexcept
 {
     return meanPressure_;
 }
 
+// Returns the latest measured positive end-expiratory pressure.
 double DashboardViewModel::measuredPeep() const noexcept
 {
     return measuredPeep_;
 }
 
+// Returns the latest completed-breath tidal volume in litres.
 double DashboardViewModel::tidalVolume() const noexcept
 {
     return tidalVolume_;
 }
 
+// Returns the latest calculated minute volume in litres per minute.
 double DashboardViewModel::minuteVolume() const noexcept
 {
     return minuteVolume_;
 }
 
+// Returns the latest calculated respiratory rate.
 double DashboardViewModel::respiratoryRate() const noexcept
 {
     return respiratoryRate_;
 }
 
+// Returns the most recently sampled oxygen concentration percentage.
 double DashboardViewModel::measuredFio2() const noexcept
 {
     return measuredFio2_;
 }
 
+// Returns the current scale factor used by the animated lung model.
 double DashboardViewModel::lungExpansionScale() const noexcept
 {
     return lungExpansionScale_;
 }
 
+// Returns normalized stiffness from zero (healthy) to one (stiff).
 double DashboardViewModel::complianceIndex() const noexcept
 {
     return complianceIndex_;
 }
 
+// Returns the highest active clinical alarm priority.
 int DashboardViewModel::highestAlarmPriority() const noexcept
 {
     return highestAlarmPriority_;
 }
 
+// Returns the operator-facing text for the active alarm.
 QString DashboardViewModel::activeAlarmText() const
 {
     return activeAlarmText_;
 }
 
+// Returns the remaining alarm-audio silence duration in seconds.
 int DashboardViewModel::silenceSecondsRemaining() const noexcept
 {
     return silenceSecondsRemaining_;
 }
 
+// Replaces the telemetry subscription while disconnecting any previous source.
 void DashboardViewModel::setTelemetrySource(WaveformPlotViewModel* telemetrySource)
 {
     disconnect(telemetryConnection_);
@@ -207,6 +237,7 @@ void DashboardViewModel::setTelemetrySource(WaveformPlotViewModel* telemetrySour
     }
 }
 
+// Starts or clears a bounded alarm-audio silence period.
 void DashboardViewModel::silenceAudioAlarm(int seconds)
 {
     const int boundedSeconds = std::clamp(seconds, 0, 3600);
@@ -224,6 +255,7 @@ void DashboardViewModel::silenceAudioAlarm(int seconds)
     }
 }
 
+// Applies a validated treatment setting and clears stale chart history.
 void DashboardViewModel::setVentilationParameter(const QString& name, double value)
 {
     if (engine_ == nullptr) {
@@ -236,6 +268,7 @@ void DashboardViewModel::setVentilationParameter(const QString& name, double val
     }
 }
 
+// Updates per-sample presentation state and completes breath-level calculations.
 void DashboardViewModel::ingestTelemetry(
     double timestamp,
     double paw,
@@ -256,6 +289,7 @@ void DashboardViewModel::ingestTelemetry(
         && !previousAudioInspiration_;
     hasBreathAudioState_ = true;
     previousAudioInspiration_ = isInspiration;
+    // Use a quiet breath marker only when no alarm or silence session is active.
     if (startsNewBreath
         && highestAlarmPriority_ == 0
         && silenceSecondsRemaining_ == 0) {
@@ -275,6 +309,7 @@ void DashboardViewModel::ingestTelemetry(
     updateAlarmState(paw, analysis.currentPeakPressure);
 }
 
+// Publishes one completed breath as the dashboard's stable metric snapshot.
 void DashboardViewModel::applyCompletedBreath(const BreathMetrics& metrics)
 {
     peakPressure_ = metrics.peakPressure;
@@ -289,6 +324,7 @@ void DashboardViewModel::applyCompletedBreath(const BreathMetrics& metrics)
     emit metricsChanged();
 }
 
+// Evaluates current measurements and notifies QML when alarm state changes.
 void DashboardViewModel::updateAlarmState(double currentPaw, double currentPeakPressure)
 {
     const AlarmState alarm = AlarmEvaluator::evaluate({
@@ -306,6 +342,7 @@ void DashboardViewModel::updateAlarmState(double currentPaw, double currentPeakP
     }
 }
 
+// Stops, schedules, or immediately plays audio to match alarm and silence state.
 void DashboardViewModel::synchronizeAudioAlarm(bool soundImmediately)
 {
     if (highestAlarmPriority_ == 0 || silenceSecondsRemaining_ > 0) {

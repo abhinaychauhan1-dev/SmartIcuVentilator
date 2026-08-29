@@ -1,3 +1,12 @@
+/**
+ * @filename    : WaveformPlotViewModel.cpp
+ * @brief   : Buffers telemetry and updates waveform and respiratory loop series.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #include "WaveformPlotViewModel.h"
 
 #include "../domain/SimulationEngine.h"
@@ -10,12 +19,14 @@
 
 namespace ventilator {
 
+// Binds the plot adapter to the telemetry-producing simulation engine.
 WaveformPlotViewModel::WaveformPlotViewModel(SimulationEngine* engine, QObject* parent)
     : QObject(parent)
     , engine_(engine)
 {
 }
 
+// Clears live and completed histories before a new treatment setting takes effect.
 void WaveformPlotViewModel::resetHistory() noexcept
 {
     waveformHead_ = 0;
@@ -26,6 +37,7 @@ void WaveformPlotViewModel::resetHistory() noexcept
     previousInspiration_ = false;
 }
 
+// Drains telemetry and replaces all three time-series charts as one batch.
 void WaveformPlotViewModel::renderSweepBatch(
     QObject* pawSeriesObject,
     QObject* flowSeriesObject,
@@ -41,6 +53,7 @@ void WaveformPlotViewModel::renderSweepBatch(
 
     bool receivedSamples = false;
     TelemetryFrame frame{};
+    // Drain the queue in one UI update so all charts share the same sample batch.
     while (engine_->tryPopTelemetry(frame)) {
         const double flowLitresPerMinute =
             units::litresPerSecondToLitresPerMinute(frame.flow);
@@ -77,9 +90,9 @@ void WaveformPlotViewModel::renderSweepBatch(
         (waveformHead_ + waveformCapacity - 1) % waveformCapacity;
     const double newestTimestamp = pawPoints_[newestIndex].x();
 
+    // Rebuild circular storage as elapsed sweep time, newest at zero seconds.
     for (std::size_t offset = 0; offset < waveformCount_; ++offset) {
         const std::size_t index = (oldestIndex + offset) % waveformCapacity;
-        // Age of sample: newest data = 0.0 sec (Left), older data expands towards Right (10.0 sec)
         const double x = newestTimestamp - pawPoints_[index].x();
         if (x > config::waveformWindowSeconds) {
             continue;
@@ -90,7 +103,7 @@ void WaveformPlotViewModel::renderSweepBatch(
         volumeHistory.append(QPointF{x, volumePoints_[index].y()});
     }
 
-    // Sort ascending by X (Required by QtGraphs for proper line rendering)
+    // Qt Graphs requires ascending X values for continuous line rendering.
     auto sortByX = [](const QPointF& a, const QPointF& b) { return a.x() < b.x(); };
     std::sort(pawHistory.begin(), pawHistory.end(), sortByX);
     std::sort(flowHistory.begin(), flowHistory.end(), sortByX);
@@ -103,6 +116,7 @@ void WaveformPlotViewModel::renderSweepBatch(
     emit waveformsUpdated();
 }
 
+// Replaces pressure-volume and flow-volume series with the current breath trace.
 void WaveformPlotViewModel::renderActiveLoops(QObject* pvSeriesObject, QObject* fvSeriesObject)
 {
     auto* pvSeries = qobject_cast<QXYSeries*>(pvSeriesObject);
@@ -125,6 +139,7 @@ void WaveformPlotViewModel::renderActiveLoops(QObject* pvSeriesObject, QObject* 
     fvSeries->replace(fvPoints);
 }
 
+// Captures a completed or active breath as an immutable visual reference.
 void WaveformPlotViewModel::freezeReferenceLoop(QObject* pvSeriesObject, QObject* fvSeriesObject)
 {
     auto* pvSeries = qobject_cast<QXYSeries*>(pvSeriesObject);
@@ -133,6 +148,7 @@ void WaveformPlotViewModel::freezeReferenceLoop(QObject* pvSeriesObject, QObject
         return;
     }
 
+    // Prefer the last complete breath so a reference cannot change mid-cycle.
     const bool hasCompletedLoop = completedLoopCount_ > 0;
     referenceLoopCount_ = hasCompletedLoop ? completedLoopCount_ : currentLoopCount_;
     const auto& sourcePv = hasCompletedLoop ? completedPvLoop_ : currentPvLoop_;
@@ -154,6 +170,7 @@ void WaveformPlotViewModel::freezeReferenceLoop(QObject* pvSeriesObject, QObject
     fvSeries->replace(fvPoints);
 }
 
+// Appends one sample to each synchronized circular waveform buffer.
 void WaveformPlotViewModel::storeWaveformPoint(
     double x, double paw, double flow, double volume) noexcept
 {
@@ -164,9 +181,11 @@ void WaveformPlotViewModel::storeWaveformPoint(
     waveformCount_ = std::min(waveformCount_ + 1, waveformCapacity);
 }
 
+// Appends loop coordinates and rolls the trace at a new inspiration.
 void WaveformPlotViewModel::storeLoopPoint(
     double volume, double paw, double flow, bool isInspiration) noexcept
 {
+    // Roll the active trace into the completed snapshot at each new inspiration.
     if (hasBreathState_ && isInspiration && !previousInspiration_) {
         completedLoopCount_ = currentLoopCount_;
         std::copy_n(currentPvLoop_.begin(), completedLoopCount_, completedPvLoop_.begin());

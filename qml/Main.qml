@@ -1,3 +1,12 @@
+/**
+ * @filename    : Main.qml
+ * @brief   : Defines the main ventilator dashboard window and navigation layout.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -53,10 +62,12 @@ ApplicationWindow {
                 TabBar {
                     id: navigationTabs
 
+                    // Keep tab clicks and swipe gestures synchronized bidirectionally.
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     currentIndex: 0
                     background: Rectangle { color: "transparent" }
+                    // Mirrors a tab selection to the swipeable page container.
                     onCurrentIndexChanged: {
                         if (swipeView.currentIndex !== currentIndex)
                             swipeView.currentIndex = currentIndex
@@ -113,10 +124,12 @@ ApplicationWindow {
         SwipeView {
             id: swipeView
 
+            // Each page shares the same backend instances injected from C++.
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             interactive: true
+            // Mirrors a swipe gesture back to the selected navigation tab.
             onCurrentIndexChanged: {
                 if (navigationTabs.currentIndex !== currentIndex)
                     navigationTabs.currentIndex = currentIndex

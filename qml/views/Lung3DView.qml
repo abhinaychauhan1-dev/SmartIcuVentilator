@@ -1,3 +1,12 @@
+/**
+ * @filename    : Lung3DView.qml
+ * @brief   : Renders a responsive 3D representation of lung ventilation.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick3D
 
@@ -14,6 +23,7 @@ Rectangle {
     property real orbitPitch: -4
     property real cameraDistance: 430
 
+    // Interpolate tissue color from healthy to stiff using normalized compliance.
     readonly property real compliance: dashboardViewModel
                                                ? Math.max(0.0, Math.min(1.0,
                                                    dashboardViewModel.complianceIndex))
@@ -113,6 +123,7 @@ Rectangle {
         Node {
             id: anatomicalTwin
 
+            // Apply orbit rotation to the anatomy while keeping lights camera-relative.
             eulerRotation: Qt.vector3d(root.orbitPitch, root.orbitYaw, 0)
 
             Node {
@@ -234,6 +245,7 @@ Rectangle {
     MouseArea {
         id: orbitControl
 
+        // Drag to orbit, wheel to zoom, and double-click to restore the clinical view.
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
@@ -241,11 +253,13 @@ Rectangle {
         property real previousX: 0
         property real previousY: 0
 
+        // Captures the pointer origin for incremental orbit movement.
         onPressed: function(mouse) {
             previousX = mouse.x
             previousY = mouse.y
         }
 
+        // Rotates the anatomy while constraining the vertical viewing angle.
         onPositionChanged: function(mouse) {
             if (!pressed)
                 return
@@ -258,6 +272,7 @@ Rectangle {
             previousY = mouse.y
         }
 
+        // Zooms the camera within the useful anatomical viewing range.
         onWheel: function(wheel) {
             root.cameraDistance = Math.max(300, Math.min(620,
                                                         root.cameraDistance
@@ -265,6 +280,7 @@ Rectangle {
             wheel.accepted = true
         }
 
+        // Restores the initial camera distance and orientation.
         onDoubleClicked: {
             root.orbitYaw = 0
             root.orbitPitch = -4

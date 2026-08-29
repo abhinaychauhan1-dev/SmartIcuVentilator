@@ -1,3 +1,12 @@
+/**
+ * @filename    : BreathMetricsCalculator.cpp
+ * @brief   : Computes breath metrics from sampled pressure, volume, and phase data.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 #include "BreathMetricsCalculator.h"
 
 #include "../domain/VentilatorConfig.h"
@@ -6,10 +15,12 @@
 
 namespace ventilator {
 
+// Accumulates one telemetry sample and publishes metrics at a new-breath boundary.
 BreathAnalysis BreathMetricsCalculator::process(
     double timestamp, double paw, double volume, bool isInspiration) noexcept
 {
     std::optional<BreathMetrics> completedBreath;
+    // An expiration-to-inspiration transition closes the previous breath.
     const bool startsNewBreath = hasTelemetry_ && isInspiration && !previousInspiration_;
     if (!hasTelemetry_) {
         reset(timestamp);
@@ -36,6 +47,7 @@ BreathAnalysis BreathMetricsCalculator::process(
     return {expansionScale, currentPeakPressure_, completedBreath};
 }
 
+// Derives respiratory rate, minute volume, and compliance from one completed breath.
 BreathMetrics BreathMetricsCalculator::completeBreath(double timestamp) const noexcept
 {
     const double measuredPeep = currentMeasuredPeep_ == std::numeric_limits<double>::max()
@@ -47,6 +59,7 @@ BreathMetrics BreathMetricsCalculator::completeBreath(double timestamp) const no
     const double dynamicCompliance = drivingPressure > 0.0
         ? currentMaximumVolume_ / drivingPressure
         : config::healthyCompliance;
+    // Normalize compliance from healthy (0) to stiff (1) for UI visualization.
     const double complianceIndex = std::clamp(
         (config::healthyCompliance - dynamicCompliance)
             / (config::healthyCompliance - config::stiffCompliance),
@@ -63,6 +76,7 @@ BreathMetrics BreathMetricsCalculator::completeBreath(double timestamp) const no
         complianceIndex};
 }
 
+    // Clears per-breath accumulators while preserving stream transition state.
 void BreathMetricsCalculator::reset(double timestamp) noexcept
 {
     breathStartTimestamp_ = timestamp;

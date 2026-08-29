@@ -1,3 +1,12 @@
+/**
+ * @filename    : WaveformView.qml
+ * @brief   : Displays live pressure, flow, and volume waveform charts.
+ *
+ * @author  : Abhinay Chauhan (email: abhinay.chauhan1@gmail.com)
+ * @version : 1.0.0
+ * Copyright (c) 2024. All rights reserved.
+ */
+
 import QtQuick
 import QtQuick.Layouts
 import QtGraphs
@@ -15,11 +24,13 @@ Rectangle {
     readonly property bool compactHeight: height < 560
     readonly property int metricValueFontSize: compactHeight ? 28 : 36
 
+    // Formats a finite dashboard metric or returns an unavailable placeholder.
     function metric(value, decimals) {
         return dashboardViewModel && Number.isFinite(value)
                 ? Number(value).toFixed(decimals) : "--"
     }
 
+    // Provides a conservative visual approximation of plateau pressure.
     function plateauPressure() {
         if (!dashboardViewModel)
             return NaN
@@ -28,6 +39,7 @@ Rectangle {
     }
 
     Timer {
+        // Batch queued telemetry near display cadence instead of updating per sample.
         interval: 33
         repeat: true
         running: root.waveformPlotViewModel !== null
@@ -42,6 +54,7 @@ Rectangle {
 
     Connections {
         target: root.waveformPlotViewModel
+        // Requests redraws after all waveform series are replaced as one batch.
         function onWaveformsUpdated() {
             pawGraph.update()
             flowGraph.update()
