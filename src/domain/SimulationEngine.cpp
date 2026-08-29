@@ -58,6 +58,11 @@ void SimulationEngine::setInspiratoryTime(double inspiratoryTime) noexcept
     inspiratoryTime_.exchange(inspiratoryTime, std::memory_order_relaxed);
 }
 
+void SimulationEngine::setFio2(double fio2) noexcept
+{
+    fio2_.exchange(fio2, std::memory_order_relaxed);
+}
+
 void SimulationEngine::setCompliance(double compliance) noexcept
 {
     compliance_.exchange(compliance, std::memory_order_relaxed);
@@ -85,6 +90,8 @@ void SimulationEngine::run(std::stop_token stopToken) noexcept
             tidalVolume_.load(std::memory_order_relaxed), 0.05, 2.0, 0.5);
         const double rate = boundedParameter(
             rate_.load(std::memory_order_relaxed), 1.0, 60.0, 12.0);
+        const double fio2 = boundedParameter(
+            fio2_.load(std::memory_order_relaxed), 21.0, 100.0, 40.0);
         const double compliance = boundedParameter(
             compliance_.load(std::memory_order_relaxed), 0.005, 0.2, 0.05);
         const double resistance = boundedParameter(
@@ -139,7 +146,7 @@ void SimulationEngine::run(std::stop_token stopToken) noexcept
         }
 
         const double paw = (volume / compliance) + (resistance * flow) + peep;
-        const TelemetryFrame frame{timestamp, paw, flow, volume, isInspiration};
+        const TelemetryFrame frame{timestamp, paw, flow, volume, fio2, isInspiration};
         if (!telemetry_.tryPush(frame)) {
             droppedFrames_.fetch_add(1, std::memory_order_relaxed);
         }

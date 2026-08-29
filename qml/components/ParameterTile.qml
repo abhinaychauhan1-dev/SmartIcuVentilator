@@ -21,6 +21,13 @@ AbstractButton {
     implicitHeight: 120
     Layout.minimumWidth: 140
     Layout.minimumHeight: 100
+
+    // Margins / Spacing around the content
+    leftPadding: 12
+    rightPadding: 12
+    topPadding: 8
+    bottomPadding: 8
+
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     Accessible.name: parameterName + " set value "

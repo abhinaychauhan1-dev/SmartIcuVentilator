@@ -17,17 +17,16 @@ Popup {
 
     readonly property real enteredValue: Number(editText)
     readonly property bool numericEntryValid: editText.length > 0
-                                                   && Number.isFinite(enteredValue)
+                                              && Number.isFinite(enteredValue)
     readonly property bool withinHardLimits: numericEntryValid
-                                                  && enteredValue >= minLimit
-                                                  && enteredValue <= maxLimit
+                                             && enteredValue >= minLimit
+                                             && enteredValue <= maxLimit
     readonly property bool exceedsSoftLimit: withinHardLimits
-                                                 && enteredValue > softLimit
+                                             && enteredValue > softLimit
     readonly property bool canConfirm: withinHardLimits
-                                           && (!exceedsSoftLimit || softLimitOverridden)
+                                       && (!exceedsSoftLimit || softLimitOverridden)
     property string editText: ""
     property bool softLimitOverridden: false
-    property int remainingMilliseconds: 5000
 
     signal valueConfirmed(string name, real value)
     signal editCancelled()
@@ -37,13 +36,12 @@ Popup {
     closePolicy: Popup.NoAutoClose
     padding: 18
     width: Math.min(430, parent ? parent.width - 32 : 430)
-    height: Math.min(660, parent ? parent.height - 32 : 660)
+    height: Math.min(620, parent ? parent.height - 32 : 620)
     anchors.centerIn: parent
 
     function resetSession() {
         editText = Number(currentValue).toFixed(valueDecimals)
         softLimitOverridden = false
-        remainingMilliseconds = 5000
     }
 
     function appendCharacter(character) {
@@ -57,16 +55,11 @@ Popup {
     }
 
     function cancelEdit() {
-        countdown.stop()
         close()
         editCancelled()
     }
 
-    onOpened: {
-        resetSession()
-        countdown.start()
-    }
-    onClosed: countdown.stop()
+    onOpened: resetSession()
 
     background: Rectangle {
         color: "#11181C"
@@ -76,17 +69,6 @@ Popup {
     }
 
     Overlay.modal: Rectangle { color: "#B0000000" }
-
-    Timer {
-        id: countdown
-        interval: 100
-        repeat: true
-        onTriggered: {
-            root.remainingMilliseconds = Math.max(0, root.remainingMilliseconds - interval)
-            if (root.remainingMilliseconds === 0)
-                root.cancelEdit()
-        }
-    }
 
     contentItem: ColumnLayout {
         spacing: 10
@@ -258,14 +240,13 @@ Popup {
                 Layout.fillWidth: true
                 Layout.minimumHeight: 56
                 onClicked: {
-                    countdown.stop()
                     root.valueConfirmed(root.parameterName, root.enteredValue)
                     root.close()
                 }
                 background: Rectangle {
-                      color: !confirmButton.enabled ? "#283238"
+                    color: !confirmButton.enabled ? "#283238"
                           : confirmButton.down ? "#00A5B8" : "#00CBE3"
-                      border.color: confirmButton.enabled ? "#80F3FF" : "#465259"
+                    border.color: confirmButton.enabled ? "#80F3FF" : "#465259"
                     border.width: 2
                     radius: 6
                 }
@@ -279,30 +260,6 @@ Popup {
                     verticalAlignment: Text.AlignVCenter
                 }
             }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 8
-            color: "#28343A"
-            radius: 4
-
-            Rectangle {
-                width: parent.width * root.remainingMilliseconds / 5000
-                height: parent.height
-                color: root.remainingMilliseconds <= 2000 ? "#FF5252" : "#00E5FF"
-                radius: 4
-
-                Behavior on width { NumberAnimation { duration: 100 } }
-            }
-        }
-
-        Text {
-            text: "Auto-cancel in " + Math.ceil(root.remainingMilliseconds / 1000) + " s"
-            color: root.remainingMilliseconds <= 2000 ? "#FF8A80" : "#93A5AE"
-            font.family: "Bahnschrift"
-            font.pixelSize: 12
-            Layout.alignment: Qt.AlignHCenter
         }
     }
 }

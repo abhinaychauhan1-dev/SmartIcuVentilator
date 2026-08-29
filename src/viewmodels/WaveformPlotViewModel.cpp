@@ -16,6 +16,16 @@ WaveformPlotViewModel::WaveformPlotViewModel(SimulationEngine* engine, QObject* 
 {
 }
 
+void WaveformPlotViewModel::resetHistory() noexcept
+{
+    waveformHead_ = 0;
+    waveformCount_ = 0;
+    currentLoopCount_ = 0;
+    completedLoopCount_ = 0;
+    hasBreathState_ = false;
+    previousInspiration_ = false;
+}
+
 void WaveformPlotViewModel::renderSweepBatch(
     QObject* pawSeriesObject,
     QObject* flowSeriesObject,
@@ -41,7 +51,12 @@ void WaveformPlotViewModel::renderSweepBatch(
 
         receivedSamples = true;
         emit telemetrySample(
-            frame.timestamp, frame.paw, frame.flow, frame.volume, frame.isInspiration);
+            frame.timestamp,
+            frame.paw,
+            frame.flow,
+            frame.volume,
+            frame.fio2,
+            frame.isInspiration);
     }
 
     if (!receivedSamples || waveformCount_ == 0) {
@@ -64,9 +79,9 @@ void WaveformPlotViewModel::renderSweepBatch(
 
     for (std::size_t offset = 0; offset < waveformCount_; ++offset) {
         const std::size_t index = (oldestIndex + offset) % waveformCapacity;
-        const double x = config::waveformWindowSeconds
-            - (newestTimestamp - pawPoints_[index].x());
-        if (x < 0.0) {
+        // Age of sample: newest data = 0.0 sec (Left), older data expands towards Right (10.0 sec)
+        const double x = newestTimestamp - pawPoints_[index].x();
+        if (x > config::waveformWindowSeconds) {
             continue;
         }
 
@@ -75,15 +90,17 @@ void WaveformPlotViewModel::renderSweepBatch(
         volumeHistory.append(QPointF{x, volumePoints_[index].y()});
     }
 
-    if (!pawHistory.isEmpty() && pawHistory.first().x() > 0.0) {
-        pawHistory.prepend(QPointF{0.0, pawHistory.first().y()});
-        flowHistory.prepend(QPointF{0.0, flowHistory.first().y()});
-        volumeHistory.prepend(QPointF{0.0, volumeHistory.first().y()});
-    }
+    // Sort ascending by X (Required by QtGraphs for proper line rendering)
+    auto sortByX = [](const QPointF& a, const QPointF& b) { return a.x() < b.x(); };
+    std::sort(pawHistory.begin(), pawHistory.end(), sortByX);
+    std::sort(flowHistory.begin(), flowHistory.end(), sortByX);
+    std::sort(volumeHistory.begin(), volumeHistory.end(), sortByX);
 
     pawSeries->replace(pawHistory);
     flowSeries->replace(flowHistory);
     volSeries->replace(volumeHistory);
+
+    emit waveformsUpdated();
 }
 
 void WaveformPlotViewModel::renderActiveLoops(QObject* pvSeriesObject, QObject* fvSeriesObject)

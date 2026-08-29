@@ -19,6 +19,7 @@ class DashboardViewModel final : public QObject {
     Q_PROPERTY(double tidalVolume READ tidalVolume NOTIFY metricsChanged)
     Q_PROPERTY(double minuteVolume READ minuteVolume NOTIFY metricsChanged)
     Q_PROPERTY(double respiratoryRate READ respiratoryRate NOTIFY metricsChanged)
+    Q_PROPERTY(double measuredFio2 READ measuredFio2 NOTIFY metricsChanged)
     Q_PROPERTY(double lungExpansionScale READ lungExpansionScale NOTIFY metricsChanged)
     Q_PROPERTY(double complianceIndex READ complianceIndex NOTIFY metricsChanged)
     Q_PROPERTY(int highestAlarmPriority READ highestAlarmPriority NOTIFY alarmStateChanged)
@@ -38,6 +39,7 @@ public:
     [[nodiscard]] double tidalVolume() const noexcept;
     [[nodiscard]] double minuteVolume() const noexcept;
     [[nodiscard]] double respiratoryRate() const noexcept;
+    [[nodiscard]] double measuredFio2() const noexcept;
     [[nodiscard]] double lungExpansionScale() const noexcept;
     [[nodiscard]] double complianceIndex() const noexcept;
     [[nodiscard]] int highestAlarmPriority() const noexcept;
@@ -60,15 +62,19 @@ private slots:
         double paw,
         double flow,
         double volume,
+        double fio2,
         bool isInspiration);
 
 private:
     void applyCompletedBreath(const BreathMetrics& metrics);
     void updateAlarmState(double currentPaw, double currentPeakPressure);
+    void synchronizeAudioAlarm(bool soundImmediately);
 
     SimulationEngine* engine_;
+    WaveformPlotViewModel* telemetrySource_{nullptr};
     QMetaObject::Connection telemetryConnection_;
     QTimer silenceTimer_;
+    QTimer alarmAudioTimer_;
 
     double peakPressure_{0.0};
     double meanPressure_{0.0};
@@ -76,6 +82,7 @@ private:
     double tidalVolume_{0.0};
     double minuteVolume_{0.0};
     double respiratoryRate_{0.0};
+    double measuredFio2_{40.0};
     double lungExpansionScale_{1.0};
     double complianceIndex_{0.0};
 
@@ -85,6 +92,8 @@ private:
 
     BreathMetricsCalculator metricsCalculator_;
     bool hasCompletedBreath_{false};
+    bool hasBreathAudioState_{false};
+    bool previousAudioInspiration_{false};
 };
 
 } // namespace ventilator

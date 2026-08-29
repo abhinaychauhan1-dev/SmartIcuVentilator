@@ -32,8 +32,21 @@ Rectangle {
         repeat: true
         running: root.waveformPlotViewModel !== null
         triggeredOnStart: true
-        onTriggered: root.waveformPlotViewModel.renderSweepBatch(
-                         pawSeries, flowSeries, volumeSeries)
+        onTriggered: {
+            if (root.waveformPlotViewModel) {
+                root.waveformPlotViewModel.renderSweepBatch(
+                    pawSeries, flowSeries, volumeSeries)
+            }
+        }
+    }
+
+    Connections {
+        target: root.waveformPlotViewModel
+        function onWaveformsUpdated() {
+            pawGraph.update()
+            flowGraph.update()
+            volumeGraph.update()
+        }
     }
 
     ColumnLayout {
@@ -64,6 +77,7 @@ Rectangle {
                     }
 
                     GraphsView {
+                        id: pawGraph
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         marginLeft: 8
@@ -78,7 +92,7 @@ Rectangle {
                         }
                         axisY: ValueAxis {
                             min: -5
-                            max: 50
+                            max: Math.max(50, root.dashboardViewModel.peakPressure * 1.2)
                             tickInterval: 10
                             labelDecimals: 0
                         }
@@ -152,6 +166,7 @@ Rectangle {
                     }
 
                     GraphsView {
+                        id: flowGraph
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         marginLeft: 8
@@ -159,7 +174,7 @@ Rectangle {
                         marginTop: 4
                         marginBottom: 4
                         axisX: ValueAxis { min: 0; max: 10; tickInterval: 1; labelDecimals: 0 }
-                        axisY: ValueAxis { min: -80; max: 80; tickInterval: 20; labelDecimals: 0 }
+                        axisY: ValueAxis { min: -300; max: 300; tickInterval: 150; labelDecimals: 0 }
                         theme: GraphsTheme {
                             colorScheme: GraphsTheme.ColorScheme.Dark
                             backgroundColor: "#090D10"
@@ -228,6 +243,7 @@ Rectangle {
                     }
 
                     GraphsView {
+                        id: volumeGraph
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         marginLeft: 8
@@ -235,7 +251,12 @@ Rectangle {
                         marginTop: 4
                         marginBottom: 4
                         axisX: ValueAxis { min: 0; max: 10; tickInterval: 1; labelDecimals: 0 }
-                        axisY: ValueAxis { min: 0; max: 800; tickInterval: 200; labelDecimals: 0 }
+                        axisY: ValueAxis {
+                            min: 0
+                            max: Math.max(800, root.dashboardViewModel.tidalVolume * 1200.0)
+                            tickInterval: 200
+                            labelDecimals: 0
+                        }
                         theme: GraphsTheme {
                             colorScheme: GraphsTheme.ColorScheme.Dark
                             backgroundColor: "#090D10"

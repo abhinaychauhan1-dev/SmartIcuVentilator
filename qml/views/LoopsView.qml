@@ -146,8 +146,18 @@ Rectangle {
                 GraphsView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    axisX: ValueAxis { min: -5; max: 50; tickInterval: 10; labelDecimals: 0 }
-                    axisY: ValueAxis { min: 0; max: 800; tickInterval: 100; labelDecimals: 0 }
+                    axisX: ValueAxis {
+                        min: -5
+                        max: Math.max(50, root.dashboardViewModel.peakPressure * 1.2)
+                        tickInterval: 10
+                        labelDecimals: 0
+                    }
+                    axisY: ValueAxis {
+                        min: 0
+                        max: Math.max(800, root.dashboardViewModel.tidalVolume * 1200.0)
+                        tickInterval: 200
+                        labelDecimals: 0
+                    }
                     theme: GraphsTheme {
                         colorScheme: GraphsTheme.ColorScheme.Dark
                         backgroundColor: "#090D10"
@@ -199,8 +209,13 @@ Rectangle {
                 GraphsView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    axisX: ValueAxis { min: 0; max: 800; tickInterval: 100; labelDecimals: 0 }
-                    axisY: ValueAxis { min: -80; max: 80; tickInterval: 20; labelDecimals: 0 }
+                    axisX: ValueAxis {
+                        min: 0
+                        max: Math.max(800, root.dashboardViewModel.tidalVolume * 1200.0)
+                        tickInterval: 200
+                        labelDecimals: 0
+                    }
+                    axisY: ValueAxis { min: -300; max: 300; tickInterval: 150; labelDecimals: 0 }
                     theme: GraphsTheme {
                         colorScheme: GraphsTheme.ColorScheme.Dark
                         backgroundColor: "#090D10"

@@ -14,6 +14,7 @@ struct TelemetryFrame {
     double paw;
     double flow;
     double volume;
+    double fio2;
     bool isInspiration;
 };
 
@@ -42,6 +43,7 @@ public:
     void setTidalVolume(double tidalVolume) noexcept;
     void setRate(double rate) noexcept;
     void setInspiratoryTime(double inspiratoryTime) noexcept;
+    void setFio2(double fio2) noexcept;
     void setCompliance(double compliance) noexcept;
     void setResistance(double resistance) noexcept;
 
@@ -93,6 +95,7 @@ private:
     std::atomic<double> tidalVolume_{0.5};
     std::atomic<double> rate_{12.0};
     std::atomic<double> inspiratoryTime_{1.0};
+    std::atomic<double> fio2_{40.0};
     std::atomic<double> compliance_{0.05};
     std::atomic<double> resistance_{10.0};
 

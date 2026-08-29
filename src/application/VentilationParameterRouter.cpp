@@ -23,6 +23,8 @@ bool VentilationParameterRouter::apply(
         engine.setRate(value);
     } else if (name == QStringLiteral("inspiratorytime")) {
         engine.setInspiratoryTime(value);
+    } else if (name == QStringLiteral("fio2")) {
+        engine.setFio2(value);
     } else if (name == QStringLiteral("compliance")) {
         engine.setCompliance(value);
     } else if (name == QStringLiteral("resistance")) {

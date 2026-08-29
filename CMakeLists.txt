@@ -14,6 +14,7 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS
     Quick
     Quick3D
     Graphs
+    Widgets
 )
 
 qt_standard_project_setup(REQUIRES 6.8)
@@ -56,7 +57,12 @@ target_link_libraries(SmartIcuVentilator
         Qt6::Quick
         Qt6::Quick3D
         Qt6::Graphs
+        Qt6::Widgets
 )
+
+if(WIN32)
+    target_link_libraries(SmartIcuVentilator PRIVATE winmm)
+endif()
 
 if(MSVC)
     target_compile_options(SmartIcuVentilator PRIVATE /W4)

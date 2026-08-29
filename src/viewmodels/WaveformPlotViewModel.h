@@ -18,6 +18,8 @@ class WaveformPlotViewModel final : public QObject {
 public:
     explicit WaveformPlotViewModel(SimulationEngine* engine, QObject* parent = nullptr);
 
+    void resetHistory() noexcept;
+
     Q_INVOKABLE void renderSweepBatch(
         QObject* pawSeries,
         QObject* flowSeries,
@@ -31,7 +33,9 @@ signals:
         double paw,
         double flow,
         double volume,
+        double fio2,
         bool isInspiration);
+    void waveformsUpdated();
 
 private:
     static constexpr std::size_t waveformCapacity = config::waveformBufferCapacity;

@@ -2,7 +2,7 @@
 #include "src/viewmodels/DashboardViewModel.h"
 #include "src/viewmodels/WaveformPlotViewModel.h"
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QVariant>
 
@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
     qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
 
-    QGuiApplication application(argc, argv);
+    QApplication application(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("SmartIcuVentilator"));
     QCoreApplication::setApplicationName(QStringLiteral("Smart ICU Ventilator"));
 

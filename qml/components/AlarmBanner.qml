@@ -90,14 +90,17 @@ Rectangle {
             text: root.silenceRemaining > 0
                   ? "AUDIO SILENCED  " + root.silenceRemaining + "s"
                   : "120s Audio Silence"
+            enabled: root.priority > 0
             hoverEnabled: true
             focusPolicy: Qt.StrongFocus
             Accessible.name: text
             onClicked: root.dashboardViewModel.silenceAudioAlarm(120)
 
             background: Rectangle {
-                color: silenceButton.down ? "#243239" : "#11191E"
-                border.color: silenceButton.activeFocus ? "#FFFFFF" : "#B6C5CB"
+                  color: !silenceButton.enabled ? "#293238"
+                      : silenceButton.down ? "#243239" : "#11191E"
+                  border.color: !silenceButton.enabled ? "#56636A"
+                          : silenceButton.activeFocus ? "#FFFFFF" : "#B6C5CB"
                 border.width: silenceButton.activeFocus ? 3 : 1
                 radius: 6
             }
@@ -156,7 +159,7 @@ Rectangle {
 
                 Text {
                     text: silenceButton.text
-                    color: "#FFFFFF"
+                    color: silenceButton.enabled ? "#FFFFFF" : "#87949A"
                     font.family: "Bahnschrift"
                     font.pixelSize: 14
                     font.weight: Font.DemiBold

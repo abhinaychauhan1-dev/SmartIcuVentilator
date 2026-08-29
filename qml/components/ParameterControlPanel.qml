@@ -14,6 +14,7 @@ Rectangle {
     property real tidalVolumeSetpoint: 500.0
     property real rateSetpoint: 12.0
     property real ieRatioSetpoint: 2.0
+    readonly property bool compactHeight: height < 130
 
     implicitHeight: 146
     color: "#0C1216"
@@ -103,7 +104,7 @@ Rectangle {
             VentilatorParameterTile {
                 parameterName: "FiO2"
                 unit: "%"
-                measuredValue: root.fio2Setpoint
+                measuredValue: root.dashboardViewModel.measuredFio2
                 targetValue: root.fio2Setpoint
                 minLimit: 21
                 maxLimit: 100
